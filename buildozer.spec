@@ -28,7 +28,7 @@ orientation = portrait
 
 # (list) List of service to declare
 #services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
-services = Smslistener:service.py
+android.services = SmsMonitorService:service.py
 
 #
 # OSX Specific
@@ -53,8 +53,7 @@ fullscreen = 0
 # (list) Permissions
 # (See https://python-for-android.readthedocs.io/en/latest/buildoptions/#build-options-1 for all the supported syntaxes and properties)
 #android.permissions = android.permission.INTERNET, (name=android.permission.WRITE_EXTERNAL_STORAGE;maxSdkVersion=18)
-android.permissions = RECEIVE_SMS, READ_SMS, MODIFY_AUDIO_SETTINGS, RECEIVE_BOOT_COMPLETED, WAKE_LOCK
-
+android.permissions = RECEIVE_SMS, READ_SMS, MODIFY_AUDIO_SETTINGS, FOREGROUND_SERVICE, SYSTEM_ALERT_WINDOW, WAKE_LOCK
 
 # (bool) If True, then skip trying to update the Android sdk
 # This can be useful to avoid excess Internet downloads or save time

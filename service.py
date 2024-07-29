@@ -1,51 +1,62 @@
-# service.py
+from kivy.app import App
 from jnius import autoclass, PythonJavaClass, java_method
-import time
-import threading
+from android.runnable import run_on_ui_thread
+import os
 
-PythonService = autoclass('org.kivy.android.PythonService')
+# Set up the Java classes needed for observing SMS
 Context = autoclass('android.content.Context')
-IntentFilter = autoclass('android.content.IntentFilter')
-SmsMessage = autoclass('android.telephony.SmsMessage')
+ContentResolver = autoclass('android.content.ContentResolver')
+Uri = autoclass('android.net.Uri')
+Cursor = autoclass('android.database.Cursor')
+Looper = autoclass('android.os.Looper')
+Handler = autoclass('android.os.Handler')
+ContentObserver = autoclass('android.database.ContentObserver')
+Intent = autoclass('android.content.Intent')
+MediaPlayer = autoclass('android.media.MediaPlayer')
 RingtoneManager = autoclass('android.media.RingtoneManager')
 AudioManager = autoclass('android.media.AudioManager')
 
-class SMSReceiver(PythonJavaClass):
-    __javainterfaces__ = ['android/content/BroadcastReceiver']
+class SmsObserver(PythonJavaClass):
+    __javainterfaces__ = ['android/database/ContentObserver']
 
-    @java_method('(Landroid/content/Context;Landroid/content/Intent;)V')
-    def onReceive(self, context, intent):
-        if intent.getAction() == 'android.provider.Telephony.SMS_RECEIVED':
-            pdus = intent.getExtras().get('pdus')
-            messages = []
-            for pdu in pdus:
-                message = SmsMessage.createFromPdu(pdu)
-                messages.append(message.getMessageBody())
-            sms_content = ''.join(messages)
-            keyword = "ALERT"
-            if keyword in sms_content:
-                self.trigger_beep(context)
+    def __init__(self, handler):
+        super(SmsObserver, self).__init__(handler)
 
-    def trigger_beep(self, context):
+    @java_method('()V')
+    def onChange(self, selfChange):
+        self.on_sms_received()
+
+    def on_sms_received(self):
+        context = App.get_running_app().context
+        content_resolver = context.getContentResolver()
+        uri = Uri.parse("content://sms/inbox")
+        cursor = content_resolver.query(uri, None, None, None, "_id DESC")
+
+        if cursor.moveToFirst():
+            body = cursor.getString(cursor.getColumnIndex("body"))
+            if "YOUR_KEYWORD" in body:
+                self.play_sound()
+
+    def play_sound(self):
+        context = App.get_running_app().context
         audio_manager = context.getSystemService(Context.AUDIO_SERVICE)
-        audio_manager.setStreamVolume(AudioManager.STREAM_MUSIC, audio_manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0)
-        ringtone = RingtoneManager.getRingtone(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
-        ringtone.play()
+        max_volume = audio_manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+        audio_manager.setStreamVolume(AudioManager.STREAM_ALARM, max_volume, 0)
 
-def start_service():
-    context = PythonService.mService.getApplicationContext()
-    receiver = SMSReceiver()
-    intent_filter = IntentFilter('android.provider.Telephony.SMS_RECEIVED')
-    context.registerReceiver(receiver, intent_filter)
+        media_player = MediaPlayer()
+        media_player.setDataSource(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+        media_player.setAudioStreamType(AudioManager.STREAM_ALARM)
+        media_player.prepare()
+        media_player.start()
 
-    # Running an infinite loop in a separate thread
-    def run_service():
-        while True:
-            time.sleep(1)
-
-    service_thread = threading.Thread(target=run_service)
-    service_thread.daemon = True  # Daemonize thread to ensure it exits when the main program exits
-    service_thread.start()
+class SMSApp(App):
+    def build(self):
+        self.context = Context.getApplicationContext()
+        handler = Handler(Looper.getMainLooper())
+        observer = SmsObserver(handler)
+        uri = Uri.parse("content://sms")
+        self.context.getContentResolver().registerContentObserver(uri, True, observer)
+        return None
 
 if __name__ == '__main__':
-    start_service()
+    SMSApp().run()
