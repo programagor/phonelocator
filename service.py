@@ -3,41 +3,49 @@ from jnius import autoclass, PythonJavaClass, java_method
 import time
 
 PythonService = autoclass('org.kivy.android.PythonService')
-Context = autoclass('android.content.Context')
-Intent = autoclass('android.content.Intent')
-BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
-SmsMessage = autoclass('android.telephony.SmsMessage')
-RingtoneManager = autoclass('android.media.RingtoneManager')
-AudioManager = autoclass('android.media.AudioManager')
+ContentResolver = autoclass('android.content.ContentResolver')
+Uri = autoclass('android.net.Uri')
+Looper = autoclass('android.os.Looper')
 
-class SMSReceiver(PythonJavaClass):
-    __javainterfaces__ = ['android/content/BroadcastReceiver']
+class SMSObserver(PythonJavaClass):
+    __javainterfaces__ = ['android/database/ContentObserver']
+    
+    def __init__(self):
+        super().__init__(self, None)
+        self.context = PythonService.mService.getApplicationContext()
+        self.content_resolver = self.context.getContentResolver()
+    
+    @java_method('()V')
+    def startObserving(self):
+        uri = Uri.parse("content://sms")
+        self.content_resolver.registerContentObserver(uri, True, self)
+    
+    @java_method('(Z)V')
+    def onChange(self, selfChange):
+        self.readSMS()
+    
+    def readSMS(self):
+        cursor = self.content_resolver.query(Uri.parse("content://sms/inbox"), None, None, None, None)
+        if cursor and cursor.moveToFirst():
+            body = cursor.getString(cursor.getColumnIndex("body"))
+            if "ALERT" in body:
+                self.trigger_beep()
+        if cursor:
+            cursor.close()
 
-    @java_method('(Landroid/content/Context;Landroid/content/Intent;)V')
-    def onReceive(self, context, intent):
-        if intent.getAction() == 'android.provider.Telephony.SMS_RECEIVED':
-            pdus = intent.getExtras().get('pdus')
-            messages = []
-            for pdu in pdus:
-                message = SmsMessage.createFromPdu(pdu)
-                messages.append(message.getMessageBody())
-            sms_content = ''.join(messages)
-            keyword = "ALERT"
-            if keyword in sms_content:
-                self.trigger_beep(context)
-
-    def trigger_beep(self, context):
-        audio_manager = context.getSystemService(Context.AUDIO_SERVICE)
+    def trigger_beep(self):
+        RingtoneManager = autoclass('android.media.RingtoneManager')
+        AudioManager = autoclass('android.media.AudioManager')
+        Context = autoclass('android.content.Context')
+        
+        audio_manager = self.context.getSystemService(Context.AUDIO_SERVICE)
         audio_manager.setStreamVolume(AudioManager.STREAM_MUSIC, audio_manager.getStreamMaxVolume(AudioManager.STREAM_MUSIC), 0)
-        ringtone = RingtoneManager.getRingtone(context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
+        ringtone = RingtoneManager.getRingtone(self.context, RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM))
         ringtone.play()
 
 def start():
-    PythonService.mService.setAutoForeground()
-    context = PythonService.mService.getApplicationContext()
-    receiver = SMSReceiver()
-    intent_filter = autoclass('android.content.IntentFilter')('android.provider.Telephony.SMS_RECEIVED')
-    context.registerReceiver(receiver, intent_filter)
+    observer = SMSObserver()
+    observer.startObserving()
     while True:
         time.sleep(1)
 

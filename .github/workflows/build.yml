@@ -36,7 +36,9 @@ jobs:
 
     - name: 'List files'
       run: |
+        pwd
         ls -hal 
+        ls ~ -hal
 
     - name: 'Upload APK and AAB as Artifact'
       uses: actions/upload-artifact@v4
