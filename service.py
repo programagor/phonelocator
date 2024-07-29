@@ -4,7 +4,6 @@ from android.runnable import run_on_ui_thread
 import os
 
 # Set up the Java classes needed for observing SMS
-PythonService = autoclass('org.kivy.android.PythonService')
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
 Context = autoclass('android.content.Context')
 Uri = autoclass('android.net.Uri')
@@ -27,7 +26,7 @@ class SmsObserver(PythonJavaClass):
         self.on_sms_received()
 
     def on_sms_received(self):
-        context = PythonService.mService.getApplicationContext()
+        context = PythonActivity.mActivity.getApplicationContext()
         content_resolver = context.getContentResolver()
         uri = Uri.parse("content://sms/inbox")
         cursor = content_resolver.query(uri, None, None, None, "_id DESC")
@@ -38,7 +37,7 @@ class SmsObserver(PythonJavaClass):
                 self.play_sound()
 
     def play_sound(self):
-        context = PythonService.mService.getApplicationContext()
+        context = PythonActivity.mActivity.getApplicationContext()
         audio_manager = context.getSystemService(Context.AUDIO_SERVICE)
         max_volume = audio_manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         audio_manager.setStreamVolume(AudioManager.STREAM_ALARM, max_volume, 0)
@@ -49,7 +48,7 @@ class SmsObserver(PythonJavaClass):
         media_player.prepare()
         media_player.start()
 
-class SMSService(PythonService):
+class SMSService(PythonActivity):
     def onCreate(self):
         super(SMSService, self).onCreate()
         handler = Handler(Looper.getMainLooper())
