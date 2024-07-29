@@ -29,16 +29,39 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
+    - name: 'Cache Buildozer .buildozer directory'
+      id: cache-buildozer
+      uses: actions/cache@v4
+      with:
+        path: |
+          .buildozer
+          ~/.android
+          ~/.buildozer
+          ~/.gradle
+          ~/.kivy
+          ~/.cache/pip
+        key: buildozer-${{ github.ref }}
+        restore-keys: |
+          buildozer-${{ github.ref }}
+          buildozer-
+
     - name: 'Build APK'
       run: |
         buildozer android debug
         #buildozer android release
 
-    - name: 'List files'
-      run: |
-        pwd
-        ls -hal 
-        ls ~ -hal
+    - name: 'Cache Buildozer .buildozer directory after build'
+      if: always()
+      uses: actions/cache@v4
+      with:
+        path: |
+          .buildozer
+          ~/.android
+          ~/.buildozer
+          ~/.gradle
+          ~/.kivy
+          ~/.cache/pip
+        key: buildozer-${{ github.ref }}
 
     - name: 'Upload APK and AAB as Artifact'
       uses: actions/upload-artifact@v4
