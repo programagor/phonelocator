@@ -5,7 +5,6 @@ from jnius import autoclass
 
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
 Intent = autoclass('android.content.Intent')
-PythonService = autoclass('org.kivy.android.PythonService')
 
 class SMSListenerApp(App):
     def build(self):
