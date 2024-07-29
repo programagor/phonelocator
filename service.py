@@ -38,4 +38,7 @@ def start_service():
     receiver = SMSReceiver()
     intent_filter = IntentFilter('android.provider.Telephony.SMS_RECEIVED')
     context.registerReceiver(receiver, intent_filter)
-  
+    while True:
+        time.sleep(1)
+
+start_service()
