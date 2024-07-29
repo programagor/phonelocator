@@ -4,9 +4,8 @@ from kivy.uix.label import Label
 from jnius import autoclass, cast
 
 PythonService = autoclass('org.kivy.android.PythonService')
-Context = autoclass('android.content.Context')
-Intent = autoclass('android.content.Intent')
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
+Intent = autoclass('android.content.Intent')
 
 class SMSListenerApp(App):
     def build(self):

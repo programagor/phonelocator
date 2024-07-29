@@ -32,7 +32,7 @@ jobs:
     - name: 'Build APK'
       run: |
         buildozer android debug
-        buildozer android release
+        #buildozer android release
 
     - name: 'List files'
       run: |
