@@ -1,9 +1,9 @@
-from kivy.app import App
 from jnius import autoclass, PythonJavaClass, java_method
 from android.runnable import run_on_ui_thread
 import os
 
 # Set up the Java classes needed for observing SMS
+PythonService = autoclass('org.kivy.android.PythonService')
 PythonActivity = autoclass('org.kivy.android.PythonActivity')
 Context = autoclass('android.content.Context')
 Uri = autoclass('android.net.Uri')
@@ -26,7 +26,7 @@ class SmsObserver(PythonJavaClass):
         self.on_sms_received()
 
     def on_sms_received(self):
-        context = PythonActivity.mActivity.getApplicationContext()
+        context = PythonService.mService.getApplicationContext()
         content_resolver = context.getContentResolver()
         uri = Uri.parse("content://sms/inbox")
         cursor = content_resolver.query(uri, None, None, None, "_id DESC")
@@ -37,7 +37,7 @@ class SmsObserver(PythonJavaClass):
                 self.play_sound()
 
     def play_sound(self):
-        context = PythonActivity.mActivity.getApplicationContext()
+        context = PythonService.mService.getApplicationContext()
         audio_manager = context.getSystemService(Context.AUDIO_SERVICE)
         max_volume = audio_manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         audio_manager.setStreamVolume(AudioManager.STREAM_ALARM, max_volume, 0)
@@ -48,7 +48,7 @@ class SmsObserver(PythonJavaClass):
         media_player.prepare()
         media_player.start()
 
-class SMSService(PythonActivity):
+class SMSService(PythonService):
     def onCreate(self):
         super(SMSService, self).onCreate()
         handler = Handler(Looper.getMainLooper())
@@ -58,17 +58,3 @@ class SMSService(PythonActivity):
 
     def onStartCommand(self, intent, flags, startId):
         return super(SMSService, self).onStartCommand(intent, flags, startId)
-
-if __name__ == '__main__':
-    from kivy.utils import platform
-    if platform == 'android':
-        from android import AndroidService
-        service = AndroidService('SMS Observer', 'running')
-        service.start('service started')
-    else:
-        from kivy.app import App
-        from kivy.uix.label import Label
-        class TestApp(App):
-            def build(self):
-                return Label(text='SMS Observer Running')
-        TestApp().run()

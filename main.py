@@ -14,7 +14,7 @@ class MainApp(App):
         mActivity = PythonActivity.mActivity
         context = cast('android.content.Context', mActivity.getApplicationContext())
         
-        serviceIntent = Intent(context, PythonActivity.getService().class_)
+        serviceIntent = Intent(context, autoclass('org.kivy.android.PythonService').class_)
         context.startService(serviceIntent)
 
 if __name__ == '__main__':
