@@ -36,7 +36,7 @@ jobs:
         path: .buildozer
         key: buildozer-${{ github.ref }}
         restore-keys: |
-          buildozer-${{ github.ref }}-
+          buildozer-${{ github.ref }}
           buildozer-
 
     - name: 'Build APK'
