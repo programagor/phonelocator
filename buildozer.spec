@@ -28,8 +28,7 @@ orientation = portrait
 
 # (list) List of service to declare
 #services = NAME:ENTRYPOINT_TO_PY,NAME2:ENTRYPOINT2_TO_PY
-services = Service:service.py
-android.services = Service:service.py
+services = Smslistener:service.py
 
 #
 # OSX Specific

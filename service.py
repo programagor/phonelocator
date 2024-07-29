@@ -4,12 +4,10 @@ import time
 
 PythonService = autoclass('org.kivy.android.PythonService')
 Context = autoclass('android.content.Context')
-Intent = autoclass('android.content.Intent')
-BroadcastReceiver = autoclass('android.content.BroadcastReceiver')
+IntentFilter = autoclass('android.content.IntentFilter')
 SmsMessage = autoclass('android.telephony.SmsMessage')
 RingtoneManager = autoclass('android.media.RingtoneManager')
 AudioManager = autoclass('android.media.AudioManager')
-IntentFilter = autoclass('android.content.IntentFilter')
 
 class SMSReceiver(PythonJavaClass):
     __javainterfaces__ = ['android/content/BroadcastReceiver']
@@ -41,4 +39,5 @@ def start_service():
     while True:
         time.sleep(1)
 
-start_service()
+if __name__ == '__main__':
+    start_service()
