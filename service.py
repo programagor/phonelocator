@@ -4,14 +4,13 @@ from android.runnable import run_on_ui_thread
 import os
 
 # Set up the Java classes needed for observing SMS
+PythonActivity = autoclass('org.kivy.android.PythonActivity')
 Context = autoclass('android.content.Context')
-ContentResolver = autoclass('android.content.ContentResolver')
 Uri = autoclass('android.net.Uri')
 Cursor = autoclass('android.database.Cursor')
 Looper = autoclass('android.os.Looper')
 Handler = autoclass('android.os.Handler')
 ContentObserver = autoclass('android.database.ContentObserver')
-Intent = autoclass('android.content.Intent')
 MediaPlayer = autoclass('android.media.MediaPlayer')
 RingtoneManager = autoclass('android.media.RingtoneManager')
 AudioManager = autoclass('android.media.AudioManager')
@@ -27,7 +26,7 @@ class SmsObserver(PythonJavaClass):
         self.on_sms_received()
 
     def on_sms_received(self):
-        context = App.get_running_app().context
+        context = PythonActivity.mActivity.getApplicationContext()
         content_resolver = context.getContentResolver()
         uri = Uri.parse("content://sms/inbox")
         cursor = content_resolver.query(uri, None, None, None, "_id DESC")
@@ -38,7 +37,7 @@ class SmsObserver(PythonJavaClass):
                 self.play_sound()
 
     def play_sound(self):
-        context = App.get_running_app().context
+        context = PythonActivity.mActivity.getApplicationContext()
         audio_manager = context.getSystemService(Context.AUDIO_SERVICE)
         max_volume = audio_manager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
         audio_manager.setStreamVolume(AudioManager.STREAM_ALARM, max_volume, 0)
@@ -51,11 +50,11 @@ class SmsObserver(PythonJavaClass):
 
 class SMSApp(App):
     def build(self):
-        self.context = Context.getApplicationContext()
+        context = PythonActivity.mActivity.getApplicationContext()
         handler = Handler(Looper.getMainLooper())
         observer = SmsObserver(handler)
         uri = Uri.parse("content://sms")
-        self.context.getContentResolver().registerContentObserver(uri, True, observer)
+        context.getContentResolver().registerContentObserver(uri, True, observer)
         return None
 
 if __name__ == '__main__':
